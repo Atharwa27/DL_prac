@@ -1,0 +1,104 @@
+import numpy as np 
+import tensorflow as tf 
+import matplotlib.pyplot as plt 
+from tensorflow import keras
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+
+# Directories for training and test data (---directory paths---)
+train_data_dir = 'mnist-jpg/train'
+test_data_dir = 'mnist-jpg/test'
+
+# Image data generators (---Data preprocessing---)
+train_datagen = ImageDataGenerator(rescale = 1.0/255)
+test_datagen = ImageDataGenerator(rescale = 1.0/255)
+
+# Create Data Generators (LOAD all the data)
+train_batch_size = 10000
+train_generator = train_datagen.flow_from_directory(
+    train_data_dir,
+    target_size =(28, 28),
+    batch_size = train_batch_size,
+    class_mode = 'categorical',
+    color_mode = 'grayscale',
+    shuffle = True,
+)
+
+test_batch_size = 2000
+test_generator = test_datagen.flow_from_directory(
+    test_data_dir,
+    target_size =(28, 28),
+    batch_size = test_batch_size,
+    class_mode = 'categorical',
+    color_mode = 'grayscale',
+    shuffle = True,
+)
+
+
+#-------- Load a Batch from The Data--------
+
+x_train, y_train = train_generator[0]
+x_test, y_test = train_generator[0]
+
+#----------- Model Architecture -------------
+model = keras.Sequential([
+    keras.layers.Flatten(input_shape=(28,28,1)),
+    keras.layers.Dense(128, activation="relu"),
+    keras.layers.Dense(10, activation="softmax")
+])
+
+
+#----------------Compile the model---------------
+
+model.compile(optimizer='sgd', loss ='categorical_crossentropy', metrics= ['accuracy'])
+
+#------------- TRAIN / FIT THE MODEL --------------
+history = model.fit(x_train, y_train, epochs= 8, validation_data=(x_test, y_test))
+
+#--------------Test / Evaluate the model--------------
+test_loss, test_acc = model.evaluate(x_test, y_test)
+print("Loss: ", test_loss)
+print("Accuracy: ", test_acc)
+
+#--------- Print the example Imgae------------
+n = 20  
+plt.figure()
+plt.imshow(x_test[n].reshape(28, 28), cmap="gray")
+plt.title(f"Actual Number: {np.argmax(y_test[n])}")
+
+predicted_value = model.predict(x_test)
+print("Predicted value: ", np.argmax(predicted_value[n]))
+
+# PLot Accuracy
+
+plt.figure()
+plt.plot(history.history['accuracy'])
+plt.plot(history.history['val_accuracy'])
+plt.title("Model Accuracy")
+plt.xlabel('epoch')
+plt.ylabel('accuracy')
+plt.legend(['Train', "Validation"], loc="upper left")
+plt.show()
+
+# PLot LOSS
+
+plt.figure()
+plt.plot(history.history['loss'])
+plt.plot(history.history['val_loss'])
+plt.title("Model Loss")
+plt.xlabel('epoch')
+plt.ylabel('loss')
+plt.legend(['Train', "Validation"], loc="upper left")
+plt.show()
+
+
+# Plot of accuracy and loss for training and validation
+plt.figure()
+plt.plot(history.history['accuracy'], label='accuracy')
+plt.plot(history.history['val_accuracy'], label='val_accuracy')
+plt.plot(history.history['loss'], label='loss')
+plt.plot(history.history['val_loss'], label='val_loss')
+plt.title("Training Loss and Accuracy")
+plt.xlabel('epoch')
+plt.ylabel('accuracy/loss')
+plt.legend()
+plt.show()
